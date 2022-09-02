@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cymonevo-luna/go-core/pkg/errors"
+	"github.com/cymon1997/go-errors/errors"
 )
 
 type Validator interface {

@@ -1,14 +1,14 @@
-package examples
+package samples
 
 import (
 	"log"
 	"net/http"
 
-	"github.com/cymon1997/go-errors/pkg/errors"
-	"github.com/cymon1997/go-errors/pkg/validator"
+	"github.com/cymon1997/go-errors/errors"
+	"github.com/cymon1997/go-errors/validator"
 )
 
-func examples() {
+func samples() {
 	// Define basic errors
 	var (
 		ErrInvalidRequest = errors.New(http.StatusUnprocessableEntity).
