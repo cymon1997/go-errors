@@ -67,6 +67,39 @@ func TestIs(t *testing.T) {
 	}
 }
 
+func TestGetCode(t *testing.T) {
+	type args struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "case basic error",
+			args: args{
+				err: errors.New("basic error"),
+			},
+			want: "UNKNOWN",
+		},
+		{
+			name: "case custom error",
+			args: args{
+				err: New(500).WithCode("INVALID_SERVER"),
+			},
+			want: "INVALID_SERVER",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetCode(tt.args.err); got != tt.want {
+				t.Errorf("GetCode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGetMessage(t *testing.T) {
 	type args struct {
 		err error
@@ -133,7 +166,7 @@ func TestGetStatus(t *testing.T) {
 	}
 }
 
-func TestIsShouldRetry(t *testing.T) {
+func TestIsRetry(t *testing.T) {
 	type args struct {
 		err error
 	}
@@ -166,8 +199,8 @@ func TestIsShouldRetry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsShouldRetry(tt.args.err); got != tt.want {
-				t.Errorf("IsShouldRetry() = %v, want %v", got, tt.want)
+			if got := IsRetry(tt.args.err); got != tt.want {
+				t.Errorf("IsRetry() = %v, want %v", got, tt.want)
 			}
 		})
 	}

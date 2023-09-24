@@ -23,25 +23,21 @@ func samples() {
 	// output: status=422 message="Invalid Request"
 
 	// Check if error should be retried
-	errors.IsShouldRetry(ErrInvalidRequest)
+	errors.IsRetry(ErrInvalidRequest)
 	// output: false
-	errors.IsShouldRetry(ErrInternalServer)
+	errors.IsRetry(ErrInternalServer)
 	// output: true
 
 	type Input struct {
-		Mandatory interface{} `json:"mandatory"`
-		Positive  int         `json:"positive"`
+		Mandatory interface{} `json:"a"`
+		Positive  int         `json:"b"`
 	}
 
 	// Sample validator in function
 	fn := func(input Input) error {
 		v := validator.New()
-		if input.Mandatory == nil {
-			v.Missing("mandatory")
-		}
-		if input.Positive < 0 {
-			v.Message("positive should not be negative")
-		}
+		v.Required(input.Mandatory, "a")
+		v.Positive(input.Positive, "b")
 		return v.Error()
 	}
 

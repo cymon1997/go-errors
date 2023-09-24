@@ -26,12 +26,14 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestValidator_Missing(t *testing.T) {
+func Test_validatorImpl_Required(t *testing.T) {
+	//var empty *string
 	type fields struct {
-		missing []string
+		required []string
 	}
 	type args struct {
-		param string
+		val  interface{}
+		name string
 	}
 	tests := []struct {
 		name   string
@@ -40,71 +42,93 @@ func TestValidator_Missing(t *testing.T) {
 		want   []string
 	}{
 		{
-			name: "case first",
-			fields: fields{
-				missing: nil,
-			},
+			name: "case interface",
 			args: args{
-				param: "id",
+				val:  nil,
+				name: "interface",
 			},
-			want: []string{
-				"id",
-			},
+			want: []string{"interface (<nil>)"},
 		},
 		{
-			name: "case normal",
-			fields: fields{
-				missing: []string{"id"},
-			},
+			name: "case pointer",
 			args: args{
-				param: "name",
+				val: func() *string {
+					return nil
+				}(),
+				name: "pointer",
 			},
-			want: []string{
-				"id", "name",
-			},
+			want: []string{"pointer (<nil>)"},
 		},
 		{
-			name: "case empty first",
-			fields: fields{
-				missing: nil,
-			},
+			name: "case string",
 			args: args{
-				param: "",
+				val:  "",
+				name: "string",
 			},
-			want: []string{
-				"",
-			},
+			want: []string{"string ()"},
 		},
 		{
-			name: "case empty",
-			fields: fields{
-				missing: []string{""},
-			},
+			name: "case number",
 			args: args{
-				param: "",
+				val:  0,
+				name: "number",
 			},
-			want: []string{
-				"", "",
+			want: []string{"number (0)"},
+		},
+		{
+			name: "case array str",
+			args: args{
+				val:  [0]string{},
+				name: "array",
 			},
+			want: []string{"array ([])"},
+		},
+
+		{
+			name: "case slice",
+			args: args{
+				val: func() []string {
+					return nil
+				}(),
+				name: "slice",
+			},
+			want: []string{"slice ([])"},
+		},
+		{
+			name: "case slice str",
+			args: args{
+				val:  []string{},
+				name: "slice",
+			},
+			want: []string{"slice ([])"},
+		},
+		{
+			name: "case slice int",
+			args: args{
+				val:  []int{},
+				name: "slice",
+			},
+			want: []string{"slice ([])"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := &validatorImpl{
-				missing: tt.fields.missing,
+				required: tt.fields.required,
 			}
-			v.Missing(tt.args.param)
-			assert.Equal(t, tt.want, v.missing)
+			v.Required(tt.args.val, tt.args.name)
+			assert.Equal(t, tt.want, v.required)
 		})
 	}
 }
 
-func TestValidator_Message(t *testing.T) {
+func Test_validatorImpl_Positive(t *testing.T) {
 	type fields struct {
-		errs []string
+		positives []string
 	}
 	type args struct {
-		message string
+		val  int
+		name string
 	}
 	tests := []struct {
 		name   string
@@ -113,52 +137,112 @@ func TestValidator_Message(t *testing.T) {
 		want   []string
 	}{
 		{
-			name: "case first",
-			fields: fields{
-				errs: nil,
-			},
+			name: "case positive",
 			args: args{
-				message: "id",
+				val:  10,
+				name: "num",
 			},
-			want: []string{
-				"id",
-			},
+			want: nil,
 		},
+		{
+			name: "case negative",
+			args: args{
+				val:  -1,
+				name: "num",
+			},
+			want: []string{"num (-1)"},
+		},
+		{
+			name: "case zero",
+			args: args{
+				val:  0,
+				name: "num",
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &validatorImpl{
+				positives: tt.fields.positives,
+			}
+			v.Positive(tt.args.val, tt.args.name)
+			assert.Equal(t, tt.want, v.positives)
+		})
+	}
+}
+
+func Test_validatorImpl_Negative(t *testing.T) {
+	type fields struct {
+		negatives []string
+	}
+	type args struct {
+		val  int
+		name string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []string
+	}{
+		{
+			name: "case positive",
+			args: args{
+				val:  10,
+				name: "num",
+			},
+			want: []string{"num (10)"},
+		},
+		{
+			name: "case negative",
+			args: args{
+				val:  -1,
+				name: "num",
+			},
+			want: nil,
+		},
+		{
+			name: "case zero",
+			args: args{
+				val:  0,
+				name: "num",
+			},
+			want: []string{"num (0)"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &validatorImpl{
+				negatives: tt.fields.negatives,
+			}
+			v.Negative(tt.args.val, tt.args.name)
+			assert.Equal(t, tt.want, v.negatives)
+		})
+	}
+}
+
+func Test_validatorImpl_Custom(t *testing.T) {
+	type fields struct {
+		errs []string
+	}
+	type args struct {
+		val  string
+		name string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []string
+	}{
 		{
 			name: "case normal",
-			fields: fields{
-				errs: []string{"id"},
-			},
 			args: args{
-				message: "name",
+				val:  "val",
+				name: "field",
 			},
-			want: []string{
-				"id", "name",
-			},
-		},
-		{
-			name: "case empty first",
-			fields: fields{
-				errs: nil,
-			},
-			args: args{
-				message: "",
-			},
-			want: []string{
-				"",
-			},
-		},
-		{
-			name: "case empty",
-			fields: fields{
-				errs: []string{""},
-			},
-			args: args{
-				message: "",
-			},
-			want: []string{
-				"", "",
-			},
+			want: []string{"field (val)"},
 		},
 	}
 	for _, tt := range tests {
@@ -166,7 +250,7 @@ func TestValidator_Message(t *testing.T) {
 			v := &validatorImpl{
 				errs: tt.fields.errs,
 			}
-			v.Message(tt.args.message)
+			v.Custom(tt.args.val, tt.args.name)
 			assert.Equal(t, tt.want, v.errs)
 		})
 	}
@@ -174,8 +258,10 @@ func TestValidator_Message(t *testing.T) {
 
 func TestValidator_Error(t *testing.T) {
 	type fields struct {
-		missing []string
-		errs    []string
+		required  []string
+		positives []string
+		negatives []string
+		errs      []string
 	}
 	tests := []struct {
 		name    string
@@ -186,42 +272,96 @@ func TestValidator_Error(t *testing.T) {
 		{
 			name: "case nil",
 			fields: fields{
-				missing: nil,
-				errs:    nil,
+				required:  nil,
+				positives: nil,
+				negatives: nil,
+				errs:      nil,
 			},
 			wantErr: false,
 		},
 		{
 			name: "case empty",
 			fields: fields{
-				missing: []string{},
-				errs:    []string{},
+				required:  []string{},
+				positives: []string{},
+				negatives: []string{},
+				errs:      []string{},
 			},
 			wantErr: false,
 		},
 		{
-			name: "case missing",
+			name: "case required",
 			fields: fields{
-				missing: []string{"id"},
-				errs:    nil,
+				required:  []string{"id"},
+				positives: nil,
+				negatives: nil,
+				errs:      nil,
 			},
-			wantMsg: "Missing Param(s) [id]",
+			wantMsg: "Required Param(s) [id]",
 			wantErr: true,
 		},
 		{
-			name: "case missing multiple",
+			name: "case required multiple",
 			fields: fields{
-				missing: []string{"id", "name"},
-				errs:    nil,
+				required:  []string{"id", "name"},
+				positives: nil,
+				negatives: nil,
+				errs:      nil,
 			},
-			wantMsg: "Missing Param(s) [id, name]",
+			wantMsg: "Required Param(s) [id, name]",
+			wantErr: true,
+		},
+		{
+			name: "case positive",
+			fields: fields{
+				required:  nil,
+				positives: []string{"id"},
+				negatives: nil,
+				errs:      nil,
+			},
+			wantMsg: "Positive Param(s) [id]",
+			wantErr: true,
+		},
+		{
+			name: "case positive multiple",
+			fields: fields{
+				required:  nil,
+				positives: []string{"id", "name"},
+				negatives: nil,
+				errs:      nil,
+			},
+			wantMsg: "Positive Param(s) [id, name]",
+			wantErr: true,
+		},
+		{
+			name: "case negative",
+			fields: fields{
+				required:  nil,
+				positives: nil,
+				negatives: []string{"id"},
+				errs:      nil,
+			},
+			wantMsg: "Negative Param(s) [id]",
+			wantErr: true,
+		},
+		{
+			name: "case negative multiple",
+			fields: fields{
+				required:  nil,
+				positives: nil,
+				negatives: []string{"id", "name"},
+				errs:      nil,
+			},
+			wantMsg: "Negative Param(s) [id, name]",
 			wantErr: true,
 		},
 		{
 			name: "case message",
 			fields: fields{
-				missing: nil,
-				errs:    []string{"Some Error"},
+				required:  nil,
+				positives: nil,
+				negatives: nil,
+				errs:      []string{"Some Error"},
 			},
 			wantMsg: "Some Error",
 			wantErr: true,
@@ -229,8 +369,10 @@ func TestValidator_Error(t *testing.T) {
 		{
 			name: "case message multiple",
 			fields: fields{
-				missing: nil,
-				errs:    []string{"Some Error", "Other Error"},
+				required:  nil,
+				positives: nil,
+				negatives: nil,
+				errs:      []string{"Some Error", "Other Error"},
 			},
 			wantMsg: "Some Error; Other Error",
 			wantErr: true,
@@ -238,18 +380,22 @@ func TestValidator_Error(t *testing.T) {
 		{
 			name: "case combined multiple",
 			fields: fields{
-				missing: []string{"id", "name"},
-				errs:    []string{"Some Error", "Other Error"},
+				required:  []string{"id", "name"},
+				positives: nil,
+				negatives: nil,
+				errs:      []string{"Some Error", "Other Error"},
 			},
-			wantMsg: "Missing Param(s) [id, name]; Some Error; Other Error",
+			wantMsg: "Required Param(s) [id, name]; Some Error; Other Error",
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := &validatorImpl{
-				missing: tt.fields.missing,
-				errs:    tt.fields.errs,
+				required:  tt.fields.required,
+				positives: tt.fields.positives,
+				negatives: tt.fields.negatives,
+				errs:      tt.fields.errs,
 			}
 			err := v.Error()
 			if tt.wantErr {

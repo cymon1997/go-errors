@@ -17,28 +17,36 @@ func Is(err, target error) bool {
 		e.Error() == t.Error()
 }
 
+func GetCode(err error) string {
+	errs, ok := err.(*Error)
+	if ok {
+		return errs.Code()
+	}
+	return "UNKNOWN"
+}
+
 func GetMessage(err error) string {
 	errs, ok := err.(*Error)
-	if !ok {
-		return err.Error()
+	if ok {
+		return errs.Message()
 	}
-	return errs.Error()
+	return err.Error()
 }
 
 func GetStatus(err error) int {
 	errs, ok := err.(*Error)
 	if ok {
-		return errs.Code()
+		return errs.Status()
 	}
 	return http.StatusInternalServerError
 }
 
-// IsShouldRetry check if error must be retried, default true
+// IsRetry check if error must be retried, default true
 // default is false to reduce unnecessary retry
-func IsShouldRetry(err error) bool {
+func IsRetry(err error) bool {
 	errs, ok := err.(*Error)
 	if ok {
-		return errs.IsShouldRetry()
+		return errs.IsRetry()
 	}
 	return false
 }

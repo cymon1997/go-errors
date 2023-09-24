@@ -7,7 +7,7 @@ import (
 
 func TestNew(t *testing.T) {
 	type args struct {
-		code int
+		status int
 	}
 	tests := []struct {
 		name string
@@ -17,17 +17,46 @@ func TestNew(t *testing.T) {
 		{
 			name: "case normal",
 			args: args{
-				code: 400,
+				status: 400,
 			},
 			want: &Error{
-				code: 400,
+				status: 400,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := New(tt.args.code); !reflect.DeepEqual(got, tt.want) {
+			if got := New(tt.args.status); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestError_WithCode(t *testing.T) {
+	type args struct {
+		code string
+	}
+	tests := []struct {
+		name string
+		args args
+		want *Error
+	}{
+		{
+			name: "case normal",
+			args: args{
+				code: "INVALID_REQUEST",
+			},
+			want: &Error{
+				code: "INVALID_REQUEST",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &Error{}
+			if got := e.WithCode(tt.args.code); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WithCode() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -64,19 +93,19 @@ func TestError_WithMessage(t *testing.T) {
 
 func TestError_Code(t *testing.T) {
 	type fields struct {
-		code int
+		code string
 	}
 	tests := []struct {
 		name   string
 		fields fields
-		want   int
+		want   string
 	}{
 		{
 			name: "case normal",
 			fields: fields{
-				code: 400,
+				code: "INVALID_REQUEST",
 			},
-			want: 400,
+			want: "INVALID_REQUEST",
 		},
 	}
 	for _, tt := range tests {
@@ -91,10 +120,69 @@ func TestError_Code(t *testing.T) {
 	}
 }
 
-func TestError_Error(t *testing.T) {
+func TestError_Message(t *testing.T) {
 	type fields struct {
 		message string
-		code    int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "case normal",
+			fields: fields{
+				message: "Invalid Request",
+			},
+			want: "Invalid Request",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &Error{
+				message: tt.fields.message,
+			}
+			if got := e.Message(); got != tt.want {
+				t.Errorf("Code() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestError_Status(t *testing.T) {
+	type fields struct {
+		status int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name: "case normal",
+			fields: fields{
+				status: 400,
+			},
+			want: 400,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &Error{
+				status: tt.fields.status,
+			}
+			if got := e.Status(); got != tt.want {
+				t.Errorf("Status() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestError_Error(t *testing.T) {
+	type fields struct {
+		code    string
+		message string
+		status  int
 	}
 	tests := []struct {
 		name   string
@@ -104,15 +192,16 @@ func TestError_Error(t *testing.T) {
 		{
 			name: "case message",
 			fields: fields{
+				code:    "INVALID_REQUEST",
 				message: "Invalid Request",
-				code:    400,
+				status:  400,
 			},
 			want: "Invalid Request",
 		},
 		{
 			name: "case no message",
 			fields: fields{
-				code: 400,
+				status: 400,
 			},
 			want: "Bad Request",
 		},
@@ -120,8 +209,9 @@ func TestError_Error(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Error{
-				message: tt.fields.message,
 				code:    tt.fields.code,
+				message: tt.fields.message,
+				status:  tt.fields.status,
 			}
 			if got := e.Error(); got != tt.want {
 				t.Errorf("Error() = %v, want %v", got, tt.want)
@@ -132,7 +222,7 @@ func TestError_Error(t *testing.T) {
 
 func TestError_ShouldRetry(t *testing.T) {
 	type fields struct {
-		code int
+		status int
 	}
 	tests := []struct {
 		name   string
@@ -142,14 +232,14 @@ func TestError_ShouldRetry(t *testing.T) {
 		{
 			name: "case retry",
 			fields: fields{
-				code: 500,
+				status: 500,
 			},
 			want: true,
 		},
 		{
 			name: "case not retry",
 			fields: fields{
-				code: 400,
+				status: 400,
 			},
 			want: false,
 		},
@@ -157,9 +247,9 @@ func TestError_ShouldRetry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Error{
-				code: tt.fields.code,
+				status: tt.fields.status,
 			}
-			if got := e.IsShouldRetry(); got != tt.want {
+			if got := e.IsRetry(); got != tt.want {
 				t.Errorf("IsShouldRetry() = %v, want %v", got, tt.want)
 			}
 		})
